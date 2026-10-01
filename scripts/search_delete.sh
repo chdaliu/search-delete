@@ -38,7 +38,7 @@ TRAVERSAL="no"      # at least one search root is a directory
 SUDO_OK="no"        # sudo obtained (search or --sudo)
 YES="no"            # non-interactive: auto-confirm, auto-save logs
 DRY_RUN="no"        # preview only
-SKIP_DEFAULTS="yes"
+SKIP_DEFAULTS="no"
 SKIP=()
 SAVE_DIR=""
 LOG_LEVEL="all"
@@ -51,7 +51,7 @@ DEF_EXACT="no"
 DEF_MODE="trash"
 DEF_ALLOW="no"
 DEF_PROTECT_NONE="no"
-DEF_SD="yes"
+DEF_SD="no"
 DEF_SAVE_DIR=""
 DEF_LOG="all"
 
@@ -80,6 +80,8 @@ DEFAULT_PROTECT_NAMES=(Documents Downloads Music Movies Pictures Desktop Public)
 # Built-in skip rules: same two flavours as the time-setter project.
 #   keywords - matched against the basename of any entry (case-insensitive)
 #   paths    - matched against the full path
+# Applied only when SKIP_DEFAULTS=yes (opt-in; the default searches every
+# directory, including caches/temp/logs, so matches are shown for selection).
 DEFAULT_SKIP_KEYWORDS=(node_modules npm .npm build dist out output target .build \
                        deriveddata pods carthage developer crashreporter crashreports \
                        diagnosticreports diagnostics debug .git .svn .hg \
@@ -205,7 +207,7 @@ msg_en() {
     protected_select)   echo "Select which protected items to delete (numbers/ranges, 'a' = all, empty/'c' = keep all):";;
     protected_kept_all) echo "Kept %d protected item(s).";;
     protected_selected_all) echo "Selected all %d protected item(s).";;
-    skip_defaults_prompt) echo "Skip built-in Mac cache/temp directories (Caches, tmp, .Trash, Logs, ...)";;
+    skip_defaults_prompt) echo "Also skip built-in Mac cache/temp directories (Caches, tmp, .Trash, Logs, ...)";;
     skip_list_intro)    echo "Enter paths to skip (basename or absolute). Empty line to finish.";;
     skip_entry_prompt)  echo "Skip item ('clear' empties the list)";;
     skip_list_cleared)  echo "Skip list cleared.";;
@@ -324,7 +326,7 @@ msg_zh() {
     protected_select)   echo "选择要删除的保护区项（编号/范围，a=全部，空行/c=全部保留）：";;
     protected_kept_all) echo "已保留 %d 个保护区项。";;
     protected_selected_all) echo "已选择全部 %d 个保护区项。";;
-    skip_defaults_prompt) echo "是否跳过内置的 Mac 缓存/临时目录（Caches、tmp、.Trash、Logs 等）";;
+    skip_defaults_prompt) echo "是否也跳过内置的 Mac 缓存/临时目录（Caches、tmp、.Trash、Logs 等）";;
     skip_list_intro)    echo "请输入要跳过的路径（basename 或绝对路径）。空行结束。";;
     skip_entry_prompt)  echo "跳过项（输入 clear 清空清单）";;
     skip_list_cleared)  echo "跳过清单已清空。";;
@@ -446,8 +448,10 @@ Options:
   --protect "p1,p2"       Extra protected paths (absolute, ~ or bare name);
                           "none" disables all protection zones
   --allow-protected       Allow deleting matches inside protected zones (explicit)
-  --skip "a,b,c"          Extra paths to skip (comma separated)
-  --skip-defaults yes|no  Skip built-in cache/temp dirs (default: yes)
+  --skip "a,b,c"          Extra paths to skip (comma separated, optional)
+  --skip-defaults yes|no  Skip built-in cache/temp dirs (default: no; the
+                          search descends into every directory, package
+                          folder contents excepted)
   --sudo                  Set/delete non-writable items via sudo
   --saveDir DIR           Directory for saving the config (default: script dir)
   --logLevel all|changes|none   Log verbosity (default: all)
@@ -2169,10 +2173,6 @@ main() {
 
   set_traversal
 
-  if [ "$TRAVERSAL" = "yes" ]; then
-    if [ "$CLI_SD" = "no" ] && [ "$YES" != "yes" ]; then prompt_skip_defaults; fi
-    if [ "$CLI_SKIP" = "no" ] && [ "$YES" != "yes" ]; then prompt_skip_list; fi
-  fi
   if [ "$CLI_MODE" = "no" ] && [ "$YES" != "yes" ]; then prompt_mode; fi
 
   prepare_protect

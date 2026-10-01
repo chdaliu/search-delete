@@ -116,11 +116,13 @@ A destructive tool is guarded by layers:
 - Under **`--yes`** protected-zone matches are **always kept unless**
   `--allow-protected` was passed — automation can never silently delete user
   data.
-- **Skip rules** (default cache/dev dirs + your `--skip` list) are applied
-  **during the search**: matching directories are pruned, so matches inside
-  `Caches`, `node_modules`, `build`, `.git`, `.Trash`, etc. are never found.
-  Package folders (`.app`, `.library`, ...) have their contents pruned too; a
-  package whose **own name** matches is returned as a candidate.
+- **The search descends into every directory by default** (caches, temp,
+  logs, `node_modules`, `build`, `.git`, `.Trash`, ...): matches are shown so
+  you can pick them, nothing is pre-filtered. Built-in cache/dev skipping is
+  **opt-in** via `--skip-defaults yes`; `--skip "p1,p2"` adds extra
+  basename/absolute paths to skip. Package folders (`.app`, `.library`, ...)
+  have their contents pruned; a package whose **own name** matches is returned
+  as a candidate.
 - **Confirmation menu** always precedes execution in interactive mode:
   `1 confirm 2 modify 3 re-select 4 exit`. `--permanent` shows an extra warning.
 
@@ -157,7 +159,7 @@ project root). Schema:
   "mode": "trash",
   "protect": [],
   "allowProtected": false,
-  "skipDefaults": true,
+  "skipDefaults": false,
   "skip": [],
   "saveDir": "",
   "logLevel": "all"

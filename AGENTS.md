@@ -122,19 +122,21 @@ selections, and matches are distinct concepts:
      empty/`c`=keep all, numbers/ranges); unselected stay, counted and recorded.
 3. **`--yes` never deletes protected zones** unless `--allow-protected` was
    passed.
-4. **Skip rules apply to the search**: `build_prune_args` builds a `find`
-   prune expression from default cache/dev keywords (`-iname`, case-insensitive
-   — required because BSD `find -name` is case-sensitive) and default/user path
-   entries (`-path`); `build_package_prune` prunes package-folder contents but
-   a package whose own name matches is still printed. `prepare_search_skip` +
-   `is_search_skipped` additionally filter results (basename equals a skip
-   keyword, or at/under a resolved skip path). So matches inside
-   `Caches`/`node_modules`/`build`/`.git`/`.Trash`/… are never found.
-   A search root that is itself a skip target (its basename equals a skip
-   keyword, or it is at/under a resolved skip path) is still searched: the
-   covering rule is waived for that root (skip tables are rebuilt per root in
-   `match_and_select` via `build_prune_args "$root"` / `prepare_search_skip
-   "$root"`).
+4. **The search descends into every directory by default** (caches, temp,
+   logs, `node_modules`, `build`, `.git`, `.Trash`, …) — the user picks the
+   matches, so nothing is pre-filtered. Built-in pruning is **opt-in** via
+   `--skip-defaults yes`: then `build_prune_args` builds a `find` prune
+   expression from default cache/dev keywords (`-iname`, case-insensitive —
+   required because BSD `find -name` is case-sensitive) and default path
+   entries (`-path`); a user `--skip` list (basename or absolute path) is
+   always honored when provided. `prepare_search_skip` + `is_search_skipped`
+   additionally filter results (basename equals a skip keyword, or at/under a
+   resolved skip path). `build_package_prune` prunes package-folder contents
+   regardless (a package whose own name matches is still printed). A search
+   root that is itself a skip target (its basename equals a skip keyword, or it
+   is at/under a resolved skip path) is still searched: the covering rule is
+   waived for that root (skip tables are rebuilt per root in `match_and_select`
+   via `build_prune_args "$root"` / `prepare_search_skip "$root"`).
 5. **Confirmation menu** (`confirm_loop`) always precedes execution when not
    `--yes`: `1 confirm 2 modify 3 re-select 4 exit`. `--permanent` prints a
    warning. `--dry-run` never executes.
@@ -198,8 +200,9 @@ must clean permissions before `rm -rf`. Coverage:
   `AnnualReport/`, nested `sub/report_deep.txt`, `"with space/report 2.txt"`,
   `a/same.txt` + `b/same.txt` (Trash collision pair), `exact_only`/`exact_other`
   (exact-match), a symlink `link_report`, `single_root.txt`;
-- skip pruning: `Caches/report_cache.dat`, `node_modules/report.js`,
-  `Temp/report_temp.dat` (must never be found);
+- searched by default: `Caches/report_cache.dat`, `node_modules/report.js`,
+  `Temp/report_temp.dat` (found by default; only pruned with `--skip-defaults
+  yes`);
 - package: `Legacy.app/Contents/info.plist` (own name must match to be a
   candidate; contents pruned);
 - protection zones: `Documents/user_report.txt`, `Downloads/dl_report.png`,
@@ -221,8 +224,9 @@ Trash or home):
 6. nested match (`sub/report_deep.txt`) deleted;
 7. special chars / spaces: `report(1).txt`, `with space/report 2.txt` deleted;
 8. hidden file `.hidden_report` matched and deleted;
-9. skip pruning: after a real run, `Caches/report_cache.dat`,
-   `node_modules/report.js`, `Temp/report_temp.dat` all still exist;
+9. cache/dev contents: after a default real run, `Caches/report_cache.dat`,
+   `node_modules/report.js`, `Temp/report_temp.dat` are all deleted; with
+   `--skip-defaults yes` they remain (pruned);
 10. package: keyword `legacy` deletes `Legacy.app` (own name), keyword `report`
     leaves `Legacy.app` untouched (contents pruned);
 11. `--exact` on a copy: only `exact_only` deleted, `exact_other` remains;

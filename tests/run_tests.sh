@@ -83,10 +83,18 @@ assert_exists "keep.txt remains" "$OUT/c4/keep.txt"
 assert_exists "photo.png remains" "$OUT/c4/photo.png"
 assert_exists "other_nested/not_matching.txt remains" "$OUT/c4/other_nested/not_matching.txt"
 
-echo "== 5. skip pruning (cache/dev contents never found) =="
-assert_exists "Caches/report_cache.dat remains" "$OUT/c4/Caches/report_cache.dat"
-assert_exists "node_modules/report.js remains" "$OUT/c4/node_modules/report.js"
-assert_exists "Temp/report_temp.dat remains" "$OUT/c4/Temp/report_temp.dat"
+echo "== 5. cache/dev contents are searched and deleted by default =="
+assert_gone "Caches/report_cache.dat deleted" "$OUT/c4/Caches/report_cache.dat"
+assert_gone "node_modules/report.js deleted" "$OUT/c4/node_modules/report.js"
+assert_gone "Temp/report_temp.dat deleted" "$OUT/c4/Temp/report_temp.dat"
+
+echo "== 5b. --skip-defaults yes restores built-in pruning =="
+build_copy c5b
+RES=$(run_sd c5b "$OUT/c5b" --keyword report --permanent --skip-defaults yes 2>&1)
+assert_ne "skip-defaults run still deletes root matches" "$(sv "$RES" "Deleted")" "0"
+assert_exists "Caches/report_cache.dat remains (skipped)" "$OUT/c5b/Caches/report_cache.dat"
+assert_exists "node_modules/report.js remains (skipped)" "$OUT/c5b/node_modules/report.js"
+assert_exists "Temp/report_temp.dat remains (skipped)" "$OUT/c5b/Temp/report_temp.dat"
 
 echo "== 6. non-writable match skipped =="
 assert_exists "noaccess_file_report remains (skipped)" "$OUT/c4/noaccess_file_report"
@@ -217,13 +225,13 @@ fi
 
 echo "== 23. skip keyword used as search root is still searched =="
 build_copy c23
-RES=$(run_sd c23 "$OUT/c23/node_modules" --keyword report --permanent 2>&1)
+RES=$(run_sd c23 "$OUT/c23/node_modules" --keyword report --permanent --skip-defaults yes 2>&1)
 assert_eq "skip-kw-root Deleted=1" "$(sv "$RES" "Deleted")" "1"
 assert_gone "skip-kw-root node_modules/report.js deleted" "$OUT/c23/node_modules/report.js"
 
 echo "== 24. user skip path used as search root is still searched =="
 build_copy c24
-RES=$(run_sd c24 "$OUT/c24/sub" --keyword report --permanent --skip "$OUT/c24/sub" 2>&1)
+RES=$(run_sd c24 "$OUT/c24/sub" --keyword report --permanent --skip-defaults yes --skip "$OUT/c24/sub" 2>&1)
 assert_eq "skip-path-root Deleted=1" "$(sv "$RES" "Deleted")" "1"
 assert_gone "skip-path-root sub/report_deep.txt deleted" "$OUT/c24/sub/report_deep.txt"
 

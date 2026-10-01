@@ -6,7 +6,8 @@
 #   - matching files: plain, case-insensitive, versioned, special chars, hidden,
 #     nested, spaces, symlink, exact-match pair, collision pair
 #   - directory matches: dir_report/, AnnualReport/
-#   - skip pruning: Caches/, node_modules/, Temp/ (must never be found)
+#   - searched by default: Caches/, node_modules/, Temp/ (findable; opt out
+#     with --skip-defaults yes)
 #   - package folder: Legacy.app (own name must match; contents pruned)
 #   - protection zones: Documents/Downloads/Music/Movies/Pictures/Desktop/Public
 #     (the fixture doubles as a fake $HOME so protection resolves hermetically)
@@ -71,7 +72,7 @@ touchf "$FIXTURE_DIR/exact_other"
 # symlink match
 ln -s report.txt "$FIXTURE_DIR/link_report"
 
-# skip-pruning (default skip list): never found
+# cache/dev dirs (searched by default; only pruned with --skip-defaults yes)
 mkdir "$FIXTURE_DIR/Caches"
 touchf "$FIXTURE_DIR/Caches/report_cache.dat"
 mkdir "$FIXTURE_DIR/node_modules"
@@ -112,7 +113,7 @@ cat > "$FIXTURE_DIR/search_delete.config.json" <<EOF
   "mode": "trash",
   "protect": [],
   "allowProtected": false,
-  "skipDefaults": true,
+  "skipDefaults": false,
   "skip": [],
   "saveDir": "",
   "logLevel": "all"

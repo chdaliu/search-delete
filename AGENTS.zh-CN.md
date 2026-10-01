@@ -101,13 +101,14 @@ keyword-search-delete/            （仓库根；项目：Search & Delete）
    - 交互 → 编号列出并询问删除哪些（`a`=全部，空/`c`=全部保留，编号/范围）；
      未选中的保留并计数、记录。
 3. **`--yes` 绝不删除保护区**，除非传了 `--allow-protected`。
-4. **跳过规则作用于搜索**：`build_prune_args` 从默认缓存/开发关键字（`-iname`，
-   大小写不敏感——因为 BSD `find -name` 区分大小写）与默认/用户路径条目
-   （`-path`）构建 `find` 剪枝表达式；`build_package_prune` 剪掉包文件夹内容，
-   但名字命中关键字的包本身仍会打印。`prepare_search_skip` + `is_search_skipped`
+4. **默认搜索深入所有目录**（缓存、临时、日志、`node_modules`、`build`、
+   `.git`、`.Trash` 等）——由用户自行挑选命中，因此不再预先过滤。内置剪枝需
+   **显式开启** `--skip-defaults yes`：此时 `build_prune_args` 从默认缓存/开发
+   关键字（`-iname`，大小写不敏感——因为 BSD `find -name` 区分大小写）与默认
+   路径条目（`-path`）构建 `find` 剪枝表达式；用户 `--skip` 清单（basename 或
+   绝对路径）只要给出就始终生效。`prepare_search_skip` + `is_search_skipped`
    再对结果过滤（basename 等于跳过关键字，或位于某解析后的跳过路径内/下）。
-   因此 `Caches`/`node_modules`/`build`/`.git`/`.Trash`/… 内部的命中永远不会
-   被发现。
+   `build_package_prune` 始终剪掉包文件夹内容（名字命中关键字的包本身仍会打印）。
    当搜索根本身就是一个跳过目标（其 basename 等于某个跳过关键字，或位于某
    解析后的跳过路径内/下）时，该根仍会被搜索：覆盖它的那条规则对该根豁免
    （`match_and_select` 中按根重建跳过表：`build_prune_args "$root"` /
@@ -168,8 +169,8 @@ keyword-search-delete/            （仓库根；项目：Search & Delete）
   `AnnualReport/`、嵌套 `sub/report_deep.txt`、`"with space/report 2.txt"`、
   `a/same.txt` + `b/same.txt`（废纸篓冲突对）、`exact_only`/`exact_other`
   （精确匹配）、符号链接 `link_report`、`single_root.txt`；
-- 跳过剪枝：`Caches/report_cache.dat`、`node_modules/report.js`、
-  `Temp/report_temp.dat`（绝不能被发现）；
+- 默认可搜：`Caches/report_cache.dat`、`node_modules/report.js`、
+  `Temp/report_temp.dat`（默认就能找到，仅 `--skip-defaults yes` 时才剪枝）；
 - 包：`Legacy.app/Contents/info.plist`（自身名字命中才成为候选；内容剪枝）；
 - 保护区：`Documents/user_report.txt`、`Downloads/dl_report.png`、
   `Desktop/desk_report.txt`、`Public/pub_report.txt`；
@@ -188,8 +189,9 @@ keyword-search-delete/            （仓库根；项目：Search & Delete）
 6. 嵌套命中（`sub/report_deep.txt`）被删除；
 7. 特殊字符/空格：`report(1).txt`、`with space/report 2.txt` 被删除；
 8. 隐藏文件 `.hidden_report` 命中并删除；
-9. 跳过剪枝：真实运行后 `Caches/report_cache.dat`、`node_modules/report.js`、
-   `Temp/report_temp.dat` 全部仍在；
+9. 缓存/开发目录内容：默认真实运行后 `Caches/report_cache.dat`、
+   `node_modules/report.js`、`Temp/report_temp.dat` 均被删除；`--skip-defaults
+   yes` 时它们保留（被剪枝）；
 10. 包：关键字 `legacy` 删除 `Legacy.app`（自身名字），关键字 `report` 时
     `Legacy.app` 原封不动（内容被剪枝）；
 11. 拷贝上 `--exact`：只删 `exact_only`，`exact_other` 保留；

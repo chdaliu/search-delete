@@ -96,10 +96,11 @@ AGENTS.zh-CN.md             # 可重现构建说明（中文）
   保护路径（绝对、`~` 或 `$HOME` 下的裸名）。
 - **`--yes` 下保护区命中一律保留**，除非显式传 `--allow-protected`——自动化
   流程永远无法静默删除用户数据。
-- **跳过规则**（内置缓存/开发目录 + `--skip` 清单）在**搜索阶段**生效：
-  命中的目录直接剪枝，因此 `Caches`、`node_modules`、`build`、`.git`、
-  `.Trash` 等内部的命中永远不会被发现。包文件夹（`.app`、`.library` 等）的
-  内容同样被剪枝；**自身名字命中**关键字的包文件夹才会作为候选返回。
+- **默认搜索深入所有目录**（缓存、临时、日志、`node_modules`、`build`、
+  `.git`、`.Trash` 等）：命中会列出来供你挑选，不做预先过滤。内置缓存/开发
+  目录跳过需**显式开启** `--skip-defaults yes`；`--skip "p1,p2"` 追加要跳过的
+  basename/绝对路径。包文件夹（`.app`、`.library` 等）的内容被剪枝；**自身
+  名字命中**关键字的包文件夹才会作为候选返回。
 - **确认菜单**在交互模式下总在执行前出现：`1 确认并执行  2 修改  3 重新选择
   4 退出`。`--permanent` 额外显示警告。
 
@@ -133,7 +134,7 @@ AGENTS.zh-CN.md             # 可重现构建说明（中文）
   "mode": "trash",
   "protect": [],
   "allowProtected": false,
-  "skipDefaults": true,
+  "skipDefaults": false,
   "skip": [],
   "saveDir": "",
   "logLevel": "all"
